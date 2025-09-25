@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TUGA Puzzle Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f9ff;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #0077b6;
+    }
+    #puzzle-container {
+      display: grid;
+      margin: 20px auto;
+      border: 2px solid #0077b6;
+      background: #caf0f8;
+    }
+    .piece {
+      border: 1px solid #fff;
+      background-size: cover;
+      cursor: grab;
+    }
+    #controls {
+      margin-top: 20px;
+    }
+    button {
+      background: #0096c7;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    button:hover {
+      background: #023e8a;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #0077b6;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐢 Turbo Tuga Puzzle</h1>
+  <p>Complete the puzzle and help Tuga go faster! 🚀</p>
+
+  <div id="controls">
+    <label for="imageSelect">Choose Image:</label>
+    <select id="imageSelect">
+      <option value="tuga1.jpg">Tuga Mascot</option>
+      <option value="tuga2.jpg">Sea Turtle</option>
+      <option value="tuga3.jpg">Turbo Logo</option>
+    </select>
+    <button onclick="startGame()">Start Puzzle</button>
+  </div>
+
+  <div id="puzzle-container"></div>
+
+  <div id="message"></div>
+
+  <script>
+    const container = document.getElementById('puzzle-container');
+    const message = document.getElementById('message');
+    let size = 3; // 3x3 puzzle
+    let pieces = [];
+
+    function startGame() {
+      const imgSrc = document.getElementById('imageSelect').value;
+      container.innerHTML = '';
+      message.innerText = '';
+      container.style.gridTemplateColumns = `repeat(${size}, 100px)`;
+      container.style.gridTemplateRows = `repeat(${size}, 100px)`;
+
+      pieces = [];
+      for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+          const piece = document.createElement('div');
+          piece.classList.add('piece');
+          piece.style.width = '100px';
+          piece.style.height = '100px';
+          piece.style.backgroundImage = `url(${imgSrc})`;
+          piece.style.backgroundPosition = `${-col * 100}px ${-row * 100}px`;
+          piece.setAttribute('data-pos', `${row}-${col}`);
+          pieces.push(piece);
+        }
+      }
+
+      shuffle(pieces);
+      pieces.forEach(piece => {
+        piece.draggable = true;
+        piece.addEventListener('dragstart', dragStart);
+        piece.addEventListener('dragover', dragOver);
+        piece.addEventListener('drop', drop);
+        container.appendChild(piece);
+      });
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    let dragged;
+
+    function dragStart(e) {
+      dragged = this;
+    }
+
+    function dragOver(e) {
+      e.preventDefault();
+    }
+
+    function drop(e) {
+      e.preventDefault();
+      if (dragged !== this) {
+        const draggedClone = dragged.cloneNode(true);
+        const thisClone = this.cloneNode(true);
+
+        container.replaceChild(draggedClone, this);
+        container.replaceChild(thisClone, dragged);
+
+        draggedClone.addEventListener('dragstart', dragStart);
+        draggedClone.addEventListener('dragover', dragOver);
+        draggedClone.addEventListener('drop', drop);
+
+        thisClone.addEventListener('dragstart', dragStart);
+        thisClone.addEventListener('dragover', dragOver);
+        thisClone.addEventListener('drop', drop);
+
+        checkWin();
+      }
+    }
+
+    function checkWin() {
+      const currentPieces = Array.from(container.children);
+      const isCorrect = currentPieces.every((piece, index) => {
+        const row = Math.floor(index / size);
+        const col = index % size;
+        return piece.getAttribute('data-pos') === `${row}-${col}`;
+      });
+      if (isCorrect) {
+        message.innerHTML = "🎉 You did it! Visit <a href='https://tugatoken.com' target='_blank'>tugatoken.com</a> to join the movement!";
+      }
+    }
+  </script>
+</body>
+</html>
