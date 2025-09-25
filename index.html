@@ -1,158 +1,373 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TUGA Puzzle Game</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TURBO TUGA — Puzzle Arcade (Prototype)</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f0f9ff;
-      margin: 0;
-      padding: 20px;
+    :root{
+      --bg:#071b2f; --card:#f6fbff; --accent:#00b4d8; --muted:#6c7a89;
     }
-    h1 {
-      color: #0077b6;
-    }
-    #puzzle-container {
-      display: grid;
-      margin: 20px auto;
-      border: 2px solid #0077b6;
-      background: #caf0f8;
-    }
-    .piece {
-      border: 1px solid #fff;
-      background-size: cover;
-      cursor: grab;
-    }
-    #controls {
-      margin-top: 20px;
-    }
-    button {
-      background: #0096c7;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      margin: 5px;
-      cursor: pointer;
-      border-radius: 8px;
-    }
-    button:hover {
-      background: #023e8a;
-    }
-    #message {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #0077b6;
-    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(180deg,#071b2f 0%,#04263a 100%);color:#052430}
+    .wrap{max-width:1100px;margin:28px auto;padding:20px;color:#022633}
+    header{display:flex;align-items:center;gap:16px}
+    header h1{margin:0;color:var(--card);font-size:22px}
+    .topbar{display:flex;gap:12px;align-items:center;margin:18px 0}
+    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(3,10,18,0.25)}
+
+    .controls{display:flex;gap:12px;flex-wrap:wrap}
+    select,input,button{padding:10px 12px;border-radius:8px;border:1px solid #e6eef4}
+    button{background:var(--accent);color:#042430;border:none;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid #e6eef4;color:#052430}
+
+    #game-area{display:flex;gap:18px;margin-top:18px}
+    #left{flex:1}
+    #right{width:320px}
+
+    #puzzle-wrap{display:flex;justify-content:center;align-items:center}
+    #puzzle{background:#eaf6fb;border-radius:8px;display:grid;gap:2px;padding:6px}
+
+    .piece{background-size:cover;background-position:center;width:100%;height:100%;user-select:none}
+
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+    .meta small{color:var(--muted)}
+
+    .leaderboard{max-height:360px;overflow:auto;margin-top:10px}
+    .lb-item{display:flex;justify-content:space-between;padding:8px;border-bottom:1px dashed #eef6fb}
+
+    .footer{color:var(--card);margin-top:18px;font-size:13px}
+
+    @media(max-width:900px){#game-area{flex-direction:column}#right{width:100%}}
   </style>
 </head>
 <body>
-  <h1>🐢 Turbo Tuga Puzzle</h1>
-  <p>Complete the puzzle and help Tuga go faster! 🚀</p>
+  <div class="wrap">
+    <header>
+      <img src="Logo.png" alt="Turbo Tuga" width="56" height="56" style="border-radius:8px;object-fit:contain;background:white;padding:6px"/>
+      <div>
+        <h1>TURBO TUGA — Puzzle Arcade</h1>
+        <div style="color:#9fd8e7;font-size:13px">Engage, compete and support ocean conservation</div>
+      </div>
+    </header>
 
-  <div id="controls">
-    <label for="imageSelect">Choose Image:</label>
-    <select id="imageSelect">
-      <option value="tuga1.jpg">Tuga Mascot</option>
-      <option value="tuga2.jpg">Sea Turtle</option>
-      <option value="tuga3.jpg">Turbo Logo</option>
-    </select>
-    <button onclick="startGame()">Start Puzzle</button>
+    <div class="topbar">
+      <div class="card" style="flex:1">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="min-width:220px">
+            <label>Choose image (add images inside <code>/images</code> folder)</label>
+            <select id="imageSelect" style="width:100%"></select>
+          </div>
+
+          <div>
+            <label>Difficulty</label>
+            <select id="difficulty">
+              <!-- options added via JS up to 20x20 -->
+            </select>
+          </div>
+
+          <div>
+            <label>Shuffle</label>
+            <button id="startBtn">Start</button>
+          </div>
+
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+          <input id="walletInput" placeholder="Solana wallet (optional)" style="flex:1" />
+          <input id="tokenAddress" disabled style="width:340px" />
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px">Your wallet is optional — used only to register winners for future token airdrops.</div>
+      </div>
+
+      <aside id="right" class="card">
+        <div style="font-weight:600">Leaderboard</div>
+        <div class="leaderboard" id="leaderboard"></div>
+
+        <div style="margin-top:12px">
+          <button id="shareBtn" class="ghost">Share Best Time</button>
+          <button id="downloadBtn">Download Scoreboard</button>
+        </div>
+
+        <div style="margin-top:14px;font-size:13px;color:var(--muted)">
+          <strong>Tip:</strong> Share your score on X with #TurboTuga to get community recognition.
+        </div>
+      </aside>
+    </div>
+
+    <div id="game-area">
+      <div id="left">
+        <div id="puzzle-wrap" class="card">
+          <div id="puzzle"></div>
+        </div>
+
+        <div class="meta card" style="margin-top:12px">
+          <div>
+            <div>Time: <span id="time">00:00.000</span></div>
+            <div style="font-size:13px;color:var(--muted)">Moves: <span id="moves">0</span></div>
+          </div>
+          <div>
+            <button id="hintBtn" class="ghost">Preview Image</button>
+            <button id="resetBtn" class="ghost">Reset</button>
+          </div>
+        </div>
+
+        <div id="finishMsg" class="card" style="display:none;margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div class="footer card" style="margin-top:18px">
+      <div>Built with ❤️ for conservation. A portion of Turbo Tuga's tokenomics supports marine life protection like Projeto Tamar.</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted)">Add/replace images in <code>/images</code>. Recommended size: square images, at least 800×800 px. Use descriptive filenames.</div>
+    </div>
   </div>
 
-  <div id="puzzle-container"></div>
-
-  <div id="message"></div>
-
   <script>
-    const container = document.getElementById('puzzle-container');
-    const message = document.getElementById('message');
-    let size = 3; // 3x3 puzzle
-    let pieces = [];
+    // --- CONFIG ---
+    const CONFIG = {
+      maxGrid: 20,
+      minGrid: 3,
+      defaultGrid: 3,
+      sampleImages: [
+        'images/tuga1.png','images/tuga2.png','images/tuga3.png','images/tuga4.png','images/tuga5.png',
+        'images/turtle_ocean1.jpg','images/turtle_ocean2.jpg','images/tamar_beach1.jpg','images/logo1.png','images/tuga_coffer1.png',
+        'images/tuga_surf1.png','images/tuga_running1.png'
+      ],
+      // Solana token address (pre-filled)
+      tokenAddress: '9QLR3WrENnBGsv6kL33d4kDHvak71k2hBvKbHgEDwQtQ'
+    };
 
-    function startGame() {
-      const imgSrc = document.getElementById('imageSelect').value;
-      container.innerHTML = '';
-      message.innerText = '';
-      container.style.gridTemplateColumns = `repeat(${size}, 100px)`;
-      container.style.gridTemplateRows = `repeat(${size}, 100px)`;
+    // --- STATE ---
+    let gridN = CONFIG.defaultGrid;
+    let pieces = []; // shuffled pieces
+    let correctOrder = [];
+    let startTime = null;
+    let timerInterval = null;
+    let moves = 0;
 
+    // --- DOM refs ---
+    const imageSelect = document.getElementById('imageSelect');
+    const difficulty = document.getElementById('difficulty');
+    const puzzle = document.getElementById('puzzle');
+    const startBtn = document.getElementById('startBtn');
+    const timeLabel = document.getElementById('time');
+    const movesLabel = document.getElementById('moves');
+    const previewBtn = document.getElementById('hintBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const finishMsg = document.getElementById('finishMsg');
+    const leaderboardEl = document.getElementById('leaderboard');
+    const walletInput = document.getElementById('walletInput');
+    const tokenAddressInput = document.getElementById('tokenAddress');
+    const shareBtn = document.getElementById('shareBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    // --- Init UI ---
+    function init(){
+      // fill images
+      CONFIG.sampleImages.forEach(src=>{
+        const opt = document.createElement('option'); opt.value=src; opt.textContent = src.split('/').pop();
+        imageSelect.appendChild(opt);
+      });
+
+      // difficulty options up to maxGrid
+      for(let i=CONFIG.minGrid;i<=CONFIG.maxGrid;i++){
+        const opt = document.createElement('option'); opt.value=i; opt.textContent = i+ ' x ' + i; if(i===CONFIG.defaultGrid) opt.selected=true;
+        difficulty.appendChild(opt);
+      }
+
+      tokenAddressInput.value = CONFIG.tokenAddress;
+
+      startBtn.addEventListener('click',()=>startGame(parseInt(difficulty.value)));
+      previewBtn.addEventListener('click',previewImage);
+      resetBtn.addEventListener('click',()=>startGame(gridN));
+      shareBtn.addEventListener('click',shareBest);
+      downloadBtn.addEventListener('click',downloadLeaderboard);
+
+      loadLeaderboard();
+    }
+
+    // --- Game logic ---
+    function startGame(n){
+      gridN = n || CONFIG.defaultGrid;
+      moves = 0; movesLabel.textContent = moves;
+      finishMsg.style.display='none';
+
+      // layout puzzle grid size
+      puzzle.style.gridTemplateColumns = `repeat(${gridN}, min(72px, calc(640px / ${gridN})))`;
+      puzzle.style.gridAutoRows = `min(72px, calc(640px / ${gridN}))`;
+
+      // build pieces
+      const img = imageSelect.value;
       pieces = [];
-      for (let row = 0; row < size; row++) {
-        for (let col = 0; col < size; col++) {
-          const piece = document.createElement('div');
-          piece.classList.add('piece');
-          piece.style.width = '100px';
-          piece.style.height = '100px';
-          piece.style.backgroundImage = `url(${imgSrc})`;
-          piece.style.backgroundPosition = `${-col * 100}px ${-row * 100}px`;
-          piece.setAttribute('data-pos', `${row}-${col}`);
-          pieces.push(piece);
+      correctOrder = [];
+      for(let r=0;r<gridN;r++){
+        for(let c=0;c<gridN;c++){
+          const idx = r*gridN+c;
+          const div = document.createElement('div');
+          div.className='piece';
+          div.dataset.correct = idx;
+          div.draggable = true;
+          // using background position trick
+          div.style.backgroundImage = `url(${img})`;
+          div.style.backgroundPosition = `${(-c*100)/ (gridN-1)}% ${(-r*100)/(gridN-1)}%`;
+          pieces.push(div);
+          correctOrder.push(idx);
         }
       }
 
-      shuffle(pieces);
-      pieces.forEach(piece => {
-        piece.draggable = true;
-        piece.addEventListener('dragstart', dragStart);
-        piece.addEventListener('dragover', dragOver);
-        piece.addEventListener('drop', drop);
-        container.appendChild(piece);
+      // shuffle
+      shuffleArray(pieces);
+      puzzle.innerHTML='';
+      pieces.forEach((p, i)=>{
+        p.dataset.index = i; // current position
+        attachDragHandlers(p);
+        puzzle.appendChild(p);
+      });
+
+      // start timer
+      if(timerInterval) clearInterval(timerInterval);
+      startTime = performance.now();
+      timerInterval = setInterval(updateTimer, 33);
+    }
+
+    function attachDragHandlers(el){
+      el.addEventListener('dragstart',e=>{
+        e.dataTransfer.setData('text/plain', el.dataset.index);
+        el.classList.add('dragging');
+      });
+      el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+      el.addEventListener('dragover',e=>e.preventDefault());
+      el.addEventListener('drop',e=>{
+        e.preventDefault();
+        const fromIndex = e.dataTransfer.getData('text/plain');
+        const toIndex = el.dataset.index;
+        swapPieces(parseInt(fromIndex), parseInt(toIndex));
       });
     }
 
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+    function swapPieces(i,j){
+      if(i===j) return;
+      // swap nodes and indexes
+      const nodes = Array.from(puzzle.children);
+      const nodeI = nodes.find(n=>parseInt(n.dataset.index)===i);
+      const nodeJ = nodes.find(n=>parseInt(n.dataset.index)===j);
+      if(!nodeI || !nodeJ) return;
+      const idxI = nodeI.dataset.index; const idxJ = nodeJ.dataset.index;
+      nodeI.dataset.index = idxJ; nodeJ.dataset.index = idxI;
+      // swap positions in DOM
+      const cloneI = nodeI.cloneNode(true); const cloneJ = nodeJ.cloneNode(true);
+      attachDragHandlers(cloneI); attachDragHandlers(cloneJ);
+
+      puzzle.replaceChild(cloneI, nodeJ);
+      puzzle.replaceChild(cloneJ, nodeI);
+
+      moves++; movesLabel.textContent = moves;
+      checkWinCondition();
+    }
+
+    function checkWinCondition(){
+      const nodes = Array.from(puzzle.children);
+      const isWin = nodes.every((n, idx)=> parseInt(n.dataset.correct) === idx);
+      if(isWin){
+        clearInterval(timerInterval);
+        const elapsed = performance.now() - startTime;
+        finishMsg.style.display='block';
+        finishMsg.innerHTML = `<div style="font-weight:700">🎉 You solved it!</div><div style='margin-top:8px'>Time: <strong>${formatTime(elapsed)}</strong> — Moves: <strong>${moves}</strong></div>`;
+        registerScore(elapsed);
+        animateConfetti();
       }
     }
 
-    let dragged;
-
-    function dragStart(e) {
-      dragged = this;
+    // --- Timer & util ---
+    function updateTimer(){
+      const elapsed = performance.now() - startTime;
+      timeLabel.textContent = formatTime(elapsed);
+    }
+    function formatTime(ms){
+      if(!ms) return '00:00.000';
+      const s = Math.floor(ms/1000); const mm = Math.floor(s/60); const ss = s%60; const msRem = Math.floor(ms%1000);
+      return `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}.${String(msRem).padStart(3,'0')}`;
     }
 
-    function dragOver(e) {
-      e.preventDefault();
+    function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } }
+
+    function previewImage(){
+      const img = imageSelect.value;
+      // show a full-size modal-like preview
+      const w = window.open('', '_blank');
+      w.document.write(`<img src='${img}' style='max-width:100%;height:auto;display:block;margin:20px auto'/>`);
     }
 
-    function drop(e) {
-      e.preventDefault();
-      if (dragged !== this) {
-        const draggedClone = dragged.cloneNode(true);
-        const thisClone = this.cloneNode(true);
-
-        container.replaceChild(draggedClone, this);
-        container.replaceChild(thisClone, dragged);
-
-        draggedClone.addEventListener('dragstart', dragStart);
-        draggedClone.addEventListener('dragover', dragOver);
-        draggedClone.addEventListener('drop', drop);
-
-        thisClone.addEventListener('dragstart', dragStart);
-        thisClone.addEventListener('dragover', dragOver);
-        thisClone.addEventListener('drop', drop);
-
-        checkWin();
-      }
+    // --- Leaderboard (localStorage) ---
+    const LB_KEY = 'tuga_puzzle_leaderboard_v1';
+    function loadLeaderboard(){
+      const raw = localStorage.getItem(LB_KEY);
+      const data = raw ? JSON.parse(raw) : [];
+      renderLeaderboard(data);
     }
-
-    function checkWin() {
-      const currentPieces = Array.from(container.children);
-      const isCorrect = currentPieces.every((piece, index) => {
-        const row = Math.floor(index / size);
-        const col = index % size;
-        return piece.getAttribute('data-pos') === `${row}-${col}`;
+    function renderLeaderboard(list){
+      leaderboardEl.innerHTML='';
+      if(!list.length) leaderboardEl.innerHTML = '<div style="color:var(--muted);padding:12px">No scores yet — be the first!</div>';
+      list.slice(0,50).forEach(item=>{
+        const d = document.createElement('div'); d.className='lb-item';
+        d.innerHTML = `<div><strong>${item.wallet||'Anonymous'}</strong><div style='font-size:12px;color:var(--muted)'>${item.date}</div></div><div><strong>${item.timeStr}</strong></div>`;
+        leaderboardEl.appendChild(d);
       });
-      if (isCorrect) {
-        message.innerHTML = "🎉 You did it! Visit <a href='https://tugatoken.com' target='_blank'>tugatoken.com</a> to join the movement!";
+    }
+
+    function registerScore(elapsed){
+      const wallet = walletInput.value.trim();
+      const list = JSON.parse(localStorage.getItem(LB_KEY) || '[]');
+      const entry = {time:elapsed, timeStr:formatTime(elapsed), wallet: wallet || 'Anonymous', date: new Date().toLocaleString()};
+      list.push(entry);
+      // sort ascending
+      list.sort((a,b)=>a.time-b.time);
+      localStorage.setItem(LB_KEY, JSON.stringify(list));
+      renderLeaderboard(list);
+    }
+
+    // --- Sharing & download ---
+    function shareBest(){
+      const list = JSON.parse(localStorage.getItem(LB_KEY) || '[]');
+      if(!list.length){ alert('No scores yet. Play a puzzle and get on the board!'); return; }
+      const best = list[0];
+      const text = `My best Turbo Tuga puzzle time: ${best.timeStr} — join the race at your site! #TurboTuga`;
+      if(navigator.share){
+        navigator.share({text}).catch(()=>{});
+      } else {
+        prompt('Copy and share on X:', text);
       }
     }
+
+    function downloadLeaderboard(){
+      const data = localStorage.getItem(LB_KEY) || '[]';
+      const blob = new Blob([data], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='tuga_leaderboard.json'; a.click(); URL.revokeObjectURL(url);
+    }
+
+    // --- Confetti (simple) ---
+    function animateConfetti(){
+      // small confetti using DOM
+      for(let i=0;i<24;i++){
+        const el = document.createElement('div');
+        el.style.position='fixed'; el.style.left=(20+Math.random()*window.innerWidth-40)+'px';
+        el.style.top='40px'; el.style.width='10px'; el.style.height='10px';
+        el.style.background=['#ffd166','#06d6a0','#ef476f','#118ab2'][Math.floor(Math.random()*4)];
+        el.style.opacity='0.95'; el.style.borderRadius='2px'; el.style.zIndex=9999;
+        document.body.appendChild(el);
+        const toY = window.innerHeight * (0.4 + Math.random()*0.5);
+        el.animate([{transform:'translateY(0) rotate(0deg)'},{transform:`translateY(${toY}px) rotate(${360*Math.random()}deg)`}],{duration:1200+Math.random()*800,easing:'ease-out'}).onfinish=()=>el.remove();
+      }
+    }
+
+    // --- Utilities: swap by DOM index helper (not used) ---
+
+    // --- Boot ---
+    init();
+
+    // Auto-start sample
+    // startGame(CONFIG.defaultGrid);
   </script>
 </body>
 </html>
