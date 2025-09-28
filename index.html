@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Turbo Tuga Puzzle</title>
+  <style>
+    body{font-family:Arial, sans-serif;text-align:center;background:#f5f7fa}
+    h1{color:#1f6feb}
+    #board{display:grid;gap:4px;justify-content:center;margin:20px auto}
+    .tile{cursor:pointer;background-size:cover;background-position:center;border-radius:6px;border:1px solid #ccc}
+    .hidden{opacity:0}
+    button{margin:5px;padding:8px 14px;border-radius:6px;border:none;cursor:pointer;background:#1f6feb;color:#fff}
+  </style>
+</head>
+<body>
+  <h1>Quebra-Cabeça Turbo Tuga</h1>
+  <p>Escolha uma imagem:</p>
+  <select id="imageSelect">
+    <option value="images/Cofre_2.jfif">Cofre</option>
+    <option value="images/Mergulho.jfif">Mergulho</option>
+    <option value="images/Money.jfif">Money</option>
+    <option value="images/Reunião.jfif">Reunião</option>
+    <option value="images/tuga_cofre.jpeg">Tuga Cofre</option>
+    <option value="images/Tuga.png">Tuga Logo</option>
+  </select>
+  <select id="size">
+    <option value="3">3x3</option>
+    <option value="4" selected>4x4</option>
+    <option value="5">5x5</option>
+  </select>
+  <button id="generate">Gerar</button>
+  <button id="shuffle">Embaralhar</button>
+  <button id="reset">Reiniciar</button>
+  <div id="board"></div>
+<script>
+(function(){
+  const board = document.getElementById('board');
+  const imgSelect = document.getElementById('imageSelect');
+  const sizeSelect = document.getElementById('size');
+  const generateBtn = document.getElementById('generate');
+  const shuffleBtn = document.getElementById('shuffle');
+  const resetBtn = document.getElementById('reset');
+  let tiles = [], order = [], gridSize = 4;
+
+  generateBtn.addEventListener('click', ()=>{
+    const imgPath = imgSelect.value;
+    gridSize = parseInt(sizeSelect.value,10);
+    createBoard(imgPath,gridSize);
+  });
+  shuffleBtn.addEventListener('click', ()=>shuffle(200));
+  resetBtn.addEventListener('click', ()=>{order=tiles.map(t=>t.index);render();});
+
+  function createBoard(src,n){
+    const img = new Image();
+    img.onload=()=>{
+      const side = Math.min(img.width,img.height);
+      const canvas=document.createElement('canvas');
+      canvas.width=canvas.height=side;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,(img.width-side)/2,(img.height-side)/2,side,side,0,0,side,side);
+      tiles=[];order=[];
+      const piece=side/n;
+      const px=Math.min(120,Math.floor((window.innerWidth-40)/n));
+      board.style.gridTemplateColumns=`repeat(${n},${px}px)`;
+      board.style.gridTemplateRows=`repeat(${n},${px}px)`;
+      board.innerHTML='';
+      for(let r=0;r<n;r++){
+        for(let c=0;c<n;c++){
+          const s=document.createElement('canvas');
+          s.width=s.height=piece;
+          s.getContext('2d').drawImage(canvas,c*piece,r*piece,piece,piece,0,0,piece,piece);
+          const d=s.toDataURL();
+          const idx=r*n+c;
+          const div=document.createElement('div');
+          div.className='tile';
+          div.style.width=px+'px';
+          div.style.height=px+'px';
+          div.style.backgroundImage=`url(${d})`;
+          div.dataset.index=idx;
+          div.addEventListener('click',()=>move(idx));
+          tiles.push({el:div,index:idx});
+          order.push(idx);
+        }
+      }
+      tiles[tiles.length-1].el.classList.add('hidden');
+      render();
+    };
+    img.src=src;
+  }
+  function render(){
+    board.innerHTML='';
+    order.forEach(i=>{
+      const t=tiles.find(x=>x.index===i);
+      board.appendChild(t.el);
+    });
+  }
+  function move(tileIndex){
+    const n=gridSize;
+    const pos=order.indexOf(tileIndex);
+    const empty=order.indexOf(tiles.length-1);
+    const dr=Math.abs(Math.floor(pos/n)-Math.floor(empty/n));
+    const dc=Math.abs((pos%n)-(empty%n));
+    if((dr===1&&dc===0)||(dr===0&&dc===1)){
+      [order[pos],order[empty]]=[order[empty],order[pos]];
+      render();
+    }
+  }
+  function shuffle(times){
+    const n=gridSize;
+    let empty=order.indexOf(tiles.length-1);
+    for(let k=0;k<times;k++){
+      const r=Math.floor(empty/n),c=empty%n;
+      const opts=[];
+      if(r>0)opts.push(empty-n);
+      if(r<n-1)opts.push(empty+n);
+      if(c>0)opts.push(empty-1);
+      if(c<n-1)opts.push(empty+1);
+      const choice=opts[Math.floor(Math.random()*opts.length)];
+      [order[choice],order[empty]]=[order[empty],order[choice]];
+      empty=choice;
+    }
+    render();
+  }
+})();
+</script>
+</body>
+</html>
